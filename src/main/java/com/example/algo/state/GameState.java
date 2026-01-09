@@ -7,15 +7,15 @@ import com.example.algo.player.Player;
 
 public class GameState {
 	/*
-	 * Definitions 
+	 * Definitions
 	 */
 	public final Cell[] board = new Cell[30];
 	public final List<Piece> pieces = new ArrayList<>();
 	private int currentPlayerIndex;
 	private int heuristec;
-	
+
 	/*
-	 * public functions 
+	 * public functions
 	 */
 	public Cell getCell(int index) {
 		return board[index];
@@ -30,7 +30,7 @@ public class GameState {
 	                 .filter(p -> player.equals(p.getOwner()))
 	                 .toList();
 	}
-	
+
 	public int calculateHeuristec(Player player) {
 		// the return value is wrong , we need to calculate what we want .
 		List<Piece> player_pieces = getPiecesFor(player);

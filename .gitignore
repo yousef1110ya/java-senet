@@ -36,3 +36,7 @@ jacoco.exec
 # Temporary files
 *.swp
 *~
+
+# Files for us
+*.pdf
+*.md
