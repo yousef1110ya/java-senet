@@ -9,10 +9,26 @@ public class GameState {
 	/*
 	 * Definitions
 	 */
-	public final Cell[] board = new Cell[30];
-	public final List<Piece> pieces = new ArrayList<>();
+	public final Cell[] board;
+	public final List<Piece> pieces;
+	public final Player[] players;
 	private int currentPlayerIndex;
 	private int heuristec;
+
+
+	public GameState(Cell[] board, List<Piece> pieces, Player[] players) {
+		this.board = new Cell[30];
+		System.arraycopy(board, 0, this.board, 0, Math.min(board.length, 30));
+
+		this.pieces = new ArrayList<>(pieces);
+
+		this.players = new Player[players.length];
+		System.arraycopy(players, 0, this.players, 0, players.length);
+
+		// Initialize current player to first player
+		this.currentPlayerIndex = 0;
+		this.heuristec = 0;
+	}
 
 	/*
 	 * public functions
@@ -24,20 +40,30 @@ public class GameState {
 	public int getHeuristec() {
 		return this.heuristec;
 	}
-	
-	public List<Piece> getPiecesFor(Player player){
-	    return pieces.stream()
-	                 .filter(p -> player.equals(p.getOwner()))
-	                 .toList();
+
+	public List<Piece> getPiecesFor(Player player) {
+		return pieces.stream()
+				.filter(p -> player.equals(p.getOwner()))
+				.toList();
 	}
 
 	public int calculateHeuristec(Player player) {
 		// the return value is wrong , we need to calculate what we want .
 		List<Piece> player_pieces = getPiecesFor(player);
-		int count = 0; 
-		for(Piece current : player_pieces) {
+		int count = 0;
+		for (Piece current : player_pieces) {
 			count += current.getPosition();
 		}
-		return count/player_pieces.size();
+		return count / player_pieces.size();
+	}
+
+
+	public Player getCurrentPlayer() {
+		return players[currentPlayerIndex];
+	}
+
+
+	public void switchPlayer() {
+		currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
 	}
 }
