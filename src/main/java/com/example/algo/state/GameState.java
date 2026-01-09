@@ -9,8 +9,8 @@ public class GameState {
 	/*
 	 * Definitions 
 	 */
-	private final Cell[] board = new Cell[30];
-	private final List<Piece> pieces = new ArrayList<>();
+	public final Cell[] board = new Cell[30];
+	public final List<Piece> pieces = new ArrayList<>();
 	private int currentPlayerIndex;
 	private int heuristec;
 	
@@ -19,6 +19,10 @@ public class GameState {
 	 */
 	public Cell getCell(int index) {
 		return board[index];
+	}
+
+	public int getHeuristec() {
+		return this.heuristec;
 	}
 	
 	public List<Piece> getPiecesFor(Player player){
