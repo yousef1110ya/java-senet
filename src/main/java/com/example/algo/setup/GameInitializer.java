@@ -13,34 +13,34 @@ import com.example.algo.player.*;
  * DEV_NOTES: the returns here are wrong , just creating the functions . 
  */
 public class GameInitializer {
-	public GameState createNewGame() {
+	public GameState createNewGame(Player[] players) {
 		BoardFactory factory = new BoardFactory();
 		Cell[] board = factory.createBoard();
 
-		List<Player> playersList = createPlayers();
+		List<Player> playersList = new ArrayList<>();
+		playersList.add(players[0]);
+		playersList.add(players[1]);
 
 		List<Piece> pieces = createPieces(playersList);
 
 		placePiecesOnBoard(pieces, playersList);
 
-		// Convert players list to array for GameState
-		Player[] playersArray = playersList.toArray(new Player[0]);
-
-		// NOTE_FOR_YOUSEF: GameState needs a new constructor that accepts these parameters, I'll add it.
-		return new GameState(board, pieces, playersArray);
+		// NOTE_FOR_YOUSEF: GameState needs a new constructor that accepts these
+		// parameters, I'll add it.
+		return new GameState(board, pieces, players);
 	}
 
-	protected List<Player> createPlayers() {
-		List<Player> players = new ArrayList<>();
+	// protected List<Player> createPlayers() {
+	// 	List<Player> players = new ArrayList<>();
 
-		Player player1 = new Player("Player 1", null);
-		players.add(player1);
+	// 	Player player1 = new Player("Player 1", null);
+	// 	players.add(player1);
 
-		Player player2 = new Player("Player 2", null);
-		players.add(player2);
+	// 	Player player2 = new Player("Player 2", null);
+	// 	players.add(player2);
 
-		return players;
-	}
+	// 	return players;
+	// }
 
 	protected List<Piece> createPieces(List<Player> players) {
 		List<Piece> pieces = new ArrayList<>();
@@ -67,8 +67,10 @@ public class GameInitializer {
 		int player1PieceIndex = 0;
 		int player2PieceIndex = 7; // Place in the List not the Board
 
-		for (int cellNumber = 1; cellNumber <= 14; cellNumber++) {
+		for (int i = 0; i < 14; i++) {
 			Piece pieceToPlace;
+
+			int cellNumber = i + 1;
 
 			if (cellNumber % 2 == 1) {
 				pieceToPlace = pieces.get(player1PieceIndex);
@@ -79,7 +81,7 @@ public class GameInitializer {
 			}
 
 			// Move the piece to the right initial position
-			pieceToPlace.moveTo(cellNumber);
+			pieceToPlace.moveTo(i);
 		}
 	}
 }

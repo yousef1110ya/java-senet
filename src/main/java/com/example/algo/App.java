@@ -11,18 +11,21 @@ import com.example.algo.util.GeneralUtil;
 public class App 
 {
     public static void main( String[] args )
-    {
+	{
+		
+		Player yousuf = new Player("Yousuf", new HumanStrategy());
+		Player omar = new Player("omar", new HumanStrategy());
+
+		Player[] players = { yousuf, omar };
+
     	//TODO: 
     	//1- initialize the game (board , pieces , players ) . 
     	GameInitializer initializer = new GameInitializer();
-    	GameState initialState = initializer.createNewGame();
+    	GameState initialState = initializer.createNewGame(players);
     	
     	//2- create players and the strategies . 
     	//(in the first case both of them is a HumanStrategy ) .
-    	Player yousuf = new Player("Yousuf",new HumanStrategy());
-    	Player omar = new Player("omar",new HumanStrategy());
-    	
-    	Player[] players = { yousuf , omar };
+
     	int currentPlayerIndex =0; 
     	
     	boolean gameOver = false;
