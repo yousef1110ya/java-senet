@@ -23,11 +23,9 @@ public class GameInitializer {
 
 		List<Piece> pieces = createPieces(playersList);
 
-		placePiecesOnBoard(pieces, playersList);
+		placePiecesOnBoard(pieces);
 
-		// NOTE_FOR_YOUSEF: GameState needs a new constructor that accepts these
-		// parameters, I'll add it.
-		return new GameState(board, pieces, players);
+		return new GameState(board, pieces);
 	}
 
 	// protected List<Player> createPlayers() {
@@ -63,7 +61,7 @@ public class GameInitializer {
 		return pieces;
 	}
 
-	private void placePiecesOnBoard(List<Piece> pieces, List<Player> players) {
+	private void placePiecesOnBoard(List<Piece> pieces) {
 		int player1PieceIndex = 0;
 		int player2PieceIndex = 7; // Place in the List not the Board
 
