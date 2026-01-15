@@ -94,7 +94,7 @@ public class App {
             } else if (pending_Horus != null && state.getPendingHorusPlayerIndex() == state.currentPlayerIndex) {
                 System.out.println("Resolving horus effect! Stick rolled: " + stick);
                 MovePiece chosenMove = current.getStrategy().chooseMove(state, current, stick);
-                if (chosenMove.getPiece().equals(pending_Horus) && stick == 2) {
+                if (chosenMove.getPiece().equals(pending_Horus)) {
                     System.out.println(pending_Horus.getOwner().getName() + "'s piece is removed by Horus!");
                     state.removePiece(pending_Horus);
                     state.clearPendingHorusPiece();
