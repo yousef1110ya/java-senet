@@ -94,23 +94,25 @@ public class BotStrategy implements MoveStrategy {
 	}
 
 	private int minValue(GameState state, int depth, Player maximizingPlayer) {
-		return chanceValue(state, depth, maximizingPlayer, true);
+		// minValue = opponent's turn (minimizing for us)
+		return chanceValue(state, depth, maximizingPlayer, false);
 	}
 
 	private int maxValue(GameState state, int depth, Player maximizingPlayer) {
-		return chanceValue(state, depth, maximizingPlayer, false);
+		// maxValue = our turn (maximizing for us)
+		return chanceValue(state, depth, maximizingPlayer, true);
 	}
 
 	private int chanceValue(GameState state, int depth, Player maximizingPlayer, boolean isOurTurn) {
 		double expectedValue = 0.0;
 
-		// Probabilities
+		// Probabilities for stick throws
 		double[] probabilities = {
 				0.25, // 1: 4/16
 				0.375, // 2: 6/16
 				0.25, // 3: 4/16
 				0.0625, // 4: 1/16
-				0.0625, // 5: 1/16
+				0.0625 // 5: 1/16
 		};
 
 		int[] stickValues = { 1, 2, 3, 4, 5 };
@@ -124,34 +126,51 @@ public class BotStrategy implements MoveStrategy {
 			List<MovePiece> moves = generateMoves(state, currentPlayer, stickThrow);
 
 			if (moves.isEmpty()) {
-				// No legal moves, skip this throw
-				GameState nexState = state.clone();
-				nexState.switchPlayer();
-				int value = expectiminimax(nexState, depth - 1, maximizingPlayer, !isOurTurn);
+				// No legal moves, skip turn
+				GameState nextState = state.clone();
+				nextState.switchPlayer();
+				int value = expectiminimax(nextState, depth - 1, maximizingPlayer, !isOurTurn);
 				expectedValue += probability * value;
 			} else {
-				// now we chose the best/worst move depending on the turn
 				int bestValue;
 
 				if (isOurTurn) {
-					// (maximizing player)
+					// Maximizing player
 					bestValue = Integer.MIN_VALUE;
 					for (MovePiece move : moves) {
-						GameState nexState = state.clone();
-						move.execute(nexState);
-						nexState.switchPlayer();
-						int value = expectiminimax(nexState, depth - 1, maximizingPlayer, false);
-						bestValue = Math.max(bestValue, value);
+						GameState nextState = state.clone();
+
+						// CRITICAL FIX: Find the corresponding piece in cloned state
+						Piece clonedPiece = findPieceInState(nextState, move.getPiece());
+
+						if (clonedPiece != null) {
+							// Create move with cloned piece
+							MovePiece clonedMove = new MovePiece(clonedPiece, move.getTargetIndex());
+							clonedMove.execute(nextState);
+							nextState.switchPlayer();
+
+							int value = expectiminimax(nextState, depth - 1, maximizingPlayer, false);
+							bestValue = Math.max(bestValue, value);
+						}
 					}
 				} else {
-					// (minimizing player)
+					// Minimizing player
 					bestValue = Integer.MAX_VALUE;
 					for (MovePiece move : moves) {
 						GameState nextState = state.clone();
-						move.execute(nextState);
-						nextState.switchPlayer();
-						int value = expectiminimax(nextState, depth - 1, maximizingPlayer, true);
-						bestValue = Math.min(bestValue, value);
+
+						// CRITICAL FIX: Find the corresponding piece in cloned state
+						Piece clonedPiece = findPieceInState(nextState, move.getPiece());
+
+						if (clonedPiece != null) {
+							// Create move with cloned piece
+							MovePiece clonedMove = new MovePiece(clonedPiece, move.getTargetIndex());
+							clonedMove.execute(nextState);
+							nextState.switchPlayer();
+
+							int value = expectiminimax(nextState, depth - 1, maximizingPlayer, true);
+							bestValue = Math.min(bestValue, value);
+						}
 					}
 				}
 
@@ -162,12 +181,29 @@ public class BotStrategy implements MoveStrategy {
 		return (int) expectedValue;
 	}
 
+	/**
+	 * Helper method to find the corresponding piece in a cloned state
+	 */
+	private Piece findPieceInState(GameState state, Piece originalPiece) {
+		for (Piece p : state.pieces) {
+			if (p.getOwner().equals(originalPiece.getOwner()) &&
+					p.getPosition() == originalPiece.getPosition()) {
+				return p;
+			}
+		}
+		return null;
+	}
+
 	private int evaluate(GameState state, Player maximizingPlayer) {
 		int score = 0;
 		Player opponent = getOpponent(state, maximizingPlayer);
 
-		// The closest piece to the goal is the best one (higher score)
+		// Get pieces for both players
 		List<Piece> myPieces = state.getPiecesFor(maximizingPlayer);
+		List<Piece> opponentPieces = state.getPiecesFor(opponent);
+
+		// === POSITION EVALUATION (SYMMETRIC) ===
+		// Reward our progress, penalize opponent's progress EQUALLY
 		for (Piece piece : myPieces) {
 			int position = piece.getPosition();
 			if (position > 30) {
@@ -177,42 +213,78 @@ public class BotStrategy implements MoveStrategy {
 			}
 		}
 
-		// Opponent's pieces are penalized
-		List<Piece> opponentPieces = state.getPiecesFor(opponent);
 		for (Piece piece : opponentPieces) {
 			int position = piece.getPosition();
 			if (position > 30) {
 				score -= WIN_BONUS;
 			} else {
-				score -= position * OPONENT_PENALTY;
+				// FIXED: Same weight as our pieces
+				score -= position * POSITION_WEIGHT;
 			}
 		}
 
-		// Bonus for having a piece on the special cell
+		// === SPECIAL CELL BONUSES (SYMMETRIC) ===
+		// Cell 15 (House of Rebirth) - EQUAL importance
 		if (hasPieceOnCell(state, maximizingPlayer, 15)) {
 			score += SPECIAL_CELL_BONUS;
 		}
 		if (hasPieceOnCell(state, opponent, 15)) {
-			score -= SPECIAL_CELL_BONUS / 2;
+			// FIXED: Full penalty, not half
+			score -= SPECIAL_CELL_BONUS;
 		}
 
+		// Cell 26 (House of Happiness) - SYMMETRIC evaluation
 		if (hasPieceOnCell(state, maximizingPlayer, 26)) {
 			score += SPECIAL_CELL_BONUS;
 		}
+		// FIXED: Added opponent evaluation for cell 26
+		if (hasPieceOnCell(state, opponent, 26)) {
+			score -= SPECIAL_CELL_BONUS;
+		}
 
-		// Bonuses for pieces on last 4 cells
+		// === END GAME BONUS (26-30 cells) ===
 		for (Piece piece : myPieces) {
 			if (piece.getPosition() >= 26 && piece.getPosition() <= 30) {
 				score += 20;
 			}
 		}
+		// FIXED: Penalize opponent's end-game position
+		for (Piece piece : opponentPieces) {
+			if (piece.getPosition() >= 26 && piece.getPosition() <= 30) {
+				score -= 20;
+			}
+		}
 
-		// if our pieces are late, add penalty for us
+		// === EARLY GAME PENALTY (SYMMETRIC) ===
+		// Penalize slow development for both players
 		for (Piece piece : myPieces) {
 			if (piece.getPosition() < 10) {
 				score -= 10;
 			}
 		}
+		// FIXED: Reward when opponent has slow pieces
+		for (Piece piece : opponentPieces) {
+			if (piece.getPosition() < 10) {
+				score += 10;
+			}
+		}
+
+		// === ADDITIONAL STRATEGIC FACTORS ===
+		// Count pieces still in play (more pieces = better position)
+		int myActivePieces = 0;
+		int opponentActivePieces = 0;
+
+		for (Piece piece : myPieces) {
+			if (piece.getPosition() <= 30)
+				myActivePieces++;
+		}
+		for (Piece piece : opponentPieces) {
+			if (piece.getPosition() <= 30)
+				opponentActivePieces++;
+		}
+
+		// Slight bonus for having more active pieces early in game
+		score += (myActivePieces - opponentActivePieces) * 5;
 
 		return score;
 	}
